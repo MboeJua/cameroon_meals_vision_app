@@ -61,7 +61,7 @@ def predict(img):
 #Build Gradio interface
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="file"),
+    inputs=gr.Image(type="filepath"),
     outputs=gr.Textbox(),
     title="Cameroonian Meal Identifier",
     description="Upload a meal image and get the predicted class."
