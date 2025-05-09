@@ -4,7 +4,6 @@ import io
 import json
 import torch
 from google.cloud import storage, vision
-from google.cloud.vision import types
 from fastai.vision.all import *
 from fastai.learner import Learner
 from pathlib import Path
