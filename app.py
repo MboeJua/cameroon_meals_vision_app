@@ -5,7 +5,7 @@ import torch
 from google.cloud import storage
 from fastai.vision.all import load_learner, PILImage
 from pathlib import Path
-
+torch.serialization.add_safe_globals([Learner])
 
 #Setting up GCP client
 credentials_content = os.environ['gcp_cam']
@@ -24,18 +24,14 @@ blob.download_to_filename(local_pkl)
 
 
 # Load the model manually
-learn = torch.load(local_pkl, map_location='cpu')
+learn = torch.load(local_pkl, map_location='cpu', weights_only=False)
 
-# Manually adjust any WindowsPath objects (if needed)
+#Adjust any path concerns
 for name, param in learn.named_parameters():
-    # Convert paths or adjust the loaded model's path as needed
     if isinstance(param, Path):
-        param = Path(str(param))  # Adjust to a string if it's a Path object
+        param = Path(str(param))  
 
-# Now use load_learner (or Learner.load() if necessary)
 learn = load_learner(local_pkl)
-
-
 
 
 def predict(img):
