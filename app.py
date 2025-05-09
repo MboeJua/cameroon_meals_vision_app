@@ -3,7 +3,7 @@ import os
 import json
 import torch
 from google.cloud import storage
-from fastai.vision.all import load_learner, PILImage
+from fastai.vision.all import load_learner, PILImage, ImageDataLoaders
 from fastai.learner import Learner
 from pathlib import Path
 torch.serialization.add_safe_globals([Learner])
@@ -15,15 +15,41 @@ with open('gcp_key.json', 'w') as f:
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
-pkl_blob = 'paulinus/cameroon_food_1.pkl'
-local_pkl = Path('cameroon_food_1.pkl')
+pkl_blob = 'paulinus/cameroon_food_weights.pth'
+dataset_prefix = 'paulinus/cameroon_meals/dataset.zip'
+local_pkl = Path('cameroon_food_weight.pth')
+local_zip = 'dataset.zip'
+local_dataset_path = Path('dataset')
+
 
 client = storage.Client()
 bucket = client.bucket(bucket_name)
+
+#Weights
 blob = bucket.blob(pkl_blob)
 blob.download_to_filename(str(local_pkl))
 
-learn = load_learner(local_pkl)
+#Dataset
+bucket.blob(dataset_blob).download_to_filename(local_zip)
+
+# Extract dataset.zip
+with zipfile.ZipFile(local_zip, 'r') as zip_ref:
+    zip_ref.extractall('dataset')
+
+
+#NN
+dls = ImageDataLoaders.from_folder(
+    local_dataset_path,
+    valid_pct=0.2,
+    seed=42,
+    item_tfms=Resize(224),
+    batch_tfms=aug_transforms(mult=1.0)
+)
+
+
+
+learn = vision_learner(dls, resnet34, metrics=accuracy)
+learn.load('cameroon_food_weights')
 
 
 def predict(img):
