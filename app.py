@@ -49,7 +49,7 @@ dls = ImageDataLoaders.from_folder(
 
 
 learn = vision_learner(dls, resnet34, metrics=accuracy)
-load_model(local_pkl, learn.model)
+load_model(local_pkl, learn.model, learn.opt)
 
 
 
