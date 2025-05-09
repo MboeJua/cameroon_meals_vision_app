@@ -15,9 +15,9 @@ with open('gcp_key.json', 'w') as f:
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
-pkl_blob = 'paulinus/cameroon_food_weights.pth'
+pkl_blob = 'paulinus/model_cam.pkl'
 dataset_blob = 'paulinus/cameroon_meals/dataset.zip'
-local_pkl = Path('cameroon_food_weight.pth')
+local_pkl = Path('model_cam.pkl')
 local_zip = 'dataset.zip'
 local_dataset_path = Path('dataset')
 
@@ -48,9 +48,10 @@ dls = ImageDataLoaders.from_folder(
 
 
 
-learn = vision_learner(dls, resnet34, metrics=accuracy)
-load_model(local_pkl, learn.model, learn.opt)
+#learn = vision_learner(dls, resnet34, metrics=accuracy)
+#load_model(local_pkl, learn.model, learn.opt)
 
+learn = load_learner(local_pkl)
 
 
 def resize_image(img_path, max_width=640, max_height=480):
