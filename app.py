@@ -25,7 +25,7 @@ blob.download_to_filename(local_pkl)
 
 
 # Load the model manually
-learn = load_learner(local_pkl, weights_only=False)
+learn = load_learner(local_pkl)
 
 #Adjust any path concerns
 for name, param in learn.named_parameters():
