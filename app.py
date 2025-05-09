@@ -25,14 +25,14 @@ blob.download_to_filename(local_pkl)
 
 
 # Load the model manually
-learn = torch.load(local_pkl, map_location='cpu', weights_only=False)
+learn = load_learner(local_pkl, map_location='cpu', weights_only=False)
 
 #Adjust any path concerns
 for name, param in learn.named_parameters():
     if isinstance(param, Path):
         param = Path(str(param))  
 
-learn = load_learner(local_pkl)
+#learn = load_learner(local_pkl)
 
 
 def predict(img):
