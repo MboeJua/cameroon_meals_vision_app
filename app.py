@@ -61,7 +61,7 @@ def predict(img):
 #Build Gradio interface
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="filepath", sources=["upload", "webcam"]),
+    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"]),
     outputs=gr.Textbox(),
     title="Cameroonian Meal Recognizer",
     description="Upload a meal image and get the predicted name.\n\n© 2025 [Paulinus Jua](https://www.linkedin.com/in/paulinus-jua-21255116b/). All rights reserved.",
