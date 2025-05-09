@@ -23,15 +23,6 @@ bucket = client.bucket(bucket_name)
 blob = bucket.blob(pkl_blob)
 blob.download_to_filename(local_pkl)
 
-
-# Load the model manually
-#learn = load_learner(local_pkl)
-
-#Adjust any path concerns
-for name, param in learn.named_parameters():
-    if isinstance(param, Path):
-        param = Path(str(param))  
-
 learn = Learner.load(local_pkl)
 
 
