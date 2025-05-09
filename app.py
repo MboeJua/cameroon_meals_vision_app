@@ -1,8 +1,9 @@
 import gradio as gr
 import os
 import json
+import torch
 from google.cloud import storage
-from fastai.vision.all import Learner, PILImage
+from fastai.vision.all import load_learner, PILImage
 from pathlib import Path
 
 
@@ -21,8 +22,19 @@ bucket = client.bucket(bucket_name)
 blob = bucket.blob(pkl_blob)
 blob.download_to_filename(local_pkl)
 
-#Load model
-learn = Learner.load(local_pkl)
+
+# Load the model manually
+learn = torch.load(local_pkl, map_location='cpu')
+
+# Manually adjust any WindowsPath objects (if needed)
+for name, param in learn.named_parameters():
+    # Convert paths or adjust the loaded model's path as needed
+    if isinstance(param, Path):
+        param = Path(str(param))  # Adjust to a string if it's a Path object
+
+# Now use load_learner (or Learner.load() if necessary)
+learn = load_learner(local_pkl)
+
 
 
 
