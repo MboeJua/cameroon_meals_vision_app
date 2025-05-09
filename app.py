@@ -15,7 +15,7 @@ with open('gcp_key.json', 'w') as f:
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
-pkl_blob = os.environ['gcp_file']
+pkl_blob = 'paulinus/cameroon_food_1.pkl'
 local_pkl = Path('cameroon_food_1.pkl')
 
 client = storage.Client()
