@@ -1,5 +1,6 @@
 fastai
 gradio
 google-cloud-storage
+google-cloud-vision
 pathlib
 torch
