@@ -3,7 +3,7 @@ import os
 import io
 import json
 import torch
-from google.cloud import storage
+from google.cloud import storage, vision
 from fastai.vision.all import *
 from fastai.learner import Learner
 from pathlib import Path
@@ -63,13 +63,32 @@ def resize_image(img_path, max_width=640, max_height=480):
     return buf
 
 
+def call_google_food_api(image_path):
+    client = vision.ImageAnnotatorClient()
+    with open(image_path, 'rb') as img_file:
+        content = img_file.read()
+    image = vision.Image(content=content)
+    response = client.label_detection(image=image)
+    labels = response.label_annotations
+    # Filter for food-related labels
+    food_labels = [label.description for label in labels if 'food' in label.description.lower()]
+    if food_labels:
+        return f"Google detected: {food_labels[0]}"
+    else:
+        return "Unknown"
+
+
+
 def predict(img, threshold=0.825):
     resized_img = resize_image(img)
     pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
     prob = outputs[pred_idx].item()
-    if prob < threshold:
-        return f"Meal: Unknown, Confidence: {prob:.4f}"
-    return f"Meal: {pred_class}, Confidence: {prob:.4f}"
+    if prob >= threshold:
+        return f"Meal: {pred_class}, Confidence: {prob:.4f}"
+    else:
+        # Low confidence → call Google API
+        google_result = call_google_food_api(img_path)
+        return google_result
 
 #Build Gradio interface
 iface = gr.Interface(
