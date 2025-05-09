@@ -4,6 +4,7 @@ import json
 import torch
 from google.cloud import storage
 from fastai.vision.all import load_learner, PILImage
+from fastai.learner import Learner
 from pathlib import Path
 torch.serialization.add_safe_globals([Learner])
 
