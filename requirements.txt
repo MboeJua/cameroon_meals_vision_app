@@ -1,3 +1,4 @@
 fastai
 gradio
 google-cloud-storage
+pathlib
