@@ -105,7 +105,7 @@ def predict(img, threshold=0.825):
         return f"Meal: {pred_class}, Confidence: {prob:.4f}"
     else:
         # Low confidence → call Google API
-        google_result = call_google_food_api(img_path)
+        google_result = call_google_food_api(img)
         return google_result
 
 #Build Gradio interface
