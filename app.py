@@ -49,7 +49,8 @@ dls = ImageDataLoaders.from_folder(
 
 
 learn = vision_learner(dls, resnet34, metrics=accuracy)
-learn.load('cameroon_food_weights',file=local_pkl)
+load_model(local_pkl, learn.model)
+
 
 
 def predict(img):
