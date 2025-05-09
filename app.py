@@ -4,7 +4,7 @@ import io
 import json
 import zipfile
 from google.cloud import storage, vision
-from fastai.vision.all import ImageDataLoaders,load_learner
+from fastai.vision.all import ImageDataLoaders,load_learner, Zipfile
 from pathlib import Path
 
 #Setting up GCP client
