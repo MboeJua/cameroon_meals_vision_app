@@ -61,6 +61,8 @@ def resize_image(img_path, max_width=640, max_height=480):
     buf.seek(0)
     return buf
 
+generic_terms_str = os.getenv('generic_terms', '')
+generic_terms = set(generic_terms_str.split(',')) 
 
 def call_google_food_api(image_path):
     try:
@@ -80,7 +82,6 @@ def call_google_food_api(image_path):
         ]
 
         # Filter out generic terms
-        generic_terms = {"food", "dish", "cuisine", "meal"}
         specific_labels = [label for label in food_labels if label.lower() not in generic_terms]
 
         if specific_labels:
