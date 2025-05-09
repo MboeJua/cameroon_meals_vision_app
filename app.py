@@ -56,15 +56,15 @@ load_model(local_pkl, learn.model, learn.opt)
 def predict(img):
     pred_class, pred_idx, outputs = learn.predict(PILImage.create(img))
     prob = outputs[pred_idx].item()
-    return f"Class: {pred_class}, Probability: {prob:.4f}"
+    return f"Meal: {pred_class}, Probability: {prob:.4f}"
 
 #Build Gradio interface
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="filepath"),
+    inputs=gr.Image(type="filepath", source="upload, webcam"),
     outputs=gr.Textbox(),
-    title="Cameroonian Meal Identifier",
-    description="Upload a meal image and get the predicted class.\n\n© 2025 [Paulinus Jua](https://www.linkedin.com/in/paulinus-jua-21255116b/). All rights reserved.",
+    title="Cameroonian Meal Recognizer",
+    description="Upload a meal image and get the predicted name.\n\n© 2025 [Paulinus Jua](https://www.linkedin.com/in/paulinus-jua-21255116b/). All rights reserved.",
 )
 
 # Launch the app
