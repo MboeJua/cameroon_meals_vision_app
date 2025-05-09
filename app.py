@@ -21,7 +21,7 @@ local_pkl = Path('cameroon_food_1.pkl')
 client = storage.Client()
 bucket = client.bucket(bucket_name)
 blob = bucket.blob(pkl_blob)
-blob.download_to_filename(local_pkl)
+blob.download_to_filename(str(local_pkl))
 
 learn = Learner.load(local_pkl)
 
