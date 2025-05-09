@@ -64,7 +64,14 @@ iface = gr.Interface(
     inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"]),
     outputs=gr.Textbox(),
     title="Cameroonian Meal Recognizer",
-    description="Upload a meal image and get the predicted name.\n\n© 2025 [Paulinus Jua](https://www.linkedin.com/in/paulinus-jua-21255116b/). All rights reserved.",
+    description="""<h2>Discover Authentic Cameroonian Meals!</h2>
+                   <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
+                   <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool provides a friendly playground to learn about our diverse dishes. Future versions will include more features, such as ingredient lists, meal preparation details, origin information (locality), and nearby restaurants!</mark></p>
+                   <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
+                   <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
+                   <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
+                   <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
+    theme="peach",  
 )
 
 # Launch the app
