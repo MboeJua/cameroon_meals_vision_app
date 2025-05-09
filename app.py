@@ -27,7 +27,7 @@ bucket = client.bucket(bucket_name)
 
 #Weights
 blob = bucket.blob(pkl_blob)
-blob.download_to_filename(str(local_pkl))
+blob.download_to_filename(local_pkl)
 
 #Dataset
 bucket.blob(dataset_blob).download_to_filename(local_zip)
@@ -49,7 +49,7 @@ dls = ImageDataLoaders.from_folder(
 
 
 learn = vision_learner(dls, resnet34, metrics=accuracy)
-learn.load('cameroon_food_weights')
+learn.load('cameroon_food_weights',file=local_pkl)
 
 
 def predict(img):
