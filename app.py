@@ -2,7 +2,7 @@ import gradio as gr
 import os
 import json
 from google.cloud import storage
-from fastai.vision.all import load_learner, PILImage
+from fastai.vision.all import Learner, PILImage
 from pathlib import Path
 
 
@@ -22,7 +22,7 @@ blob = bucket.blob(pkl_blob)
 blob.download_to_filename(local_pkl)
 
 #Load model
-learn = load_learner(local_pkl)
+learn = Learner.load(local_pkl)
 
 
 
