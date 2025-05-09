@@ -64,9 +64,9 @@ iface = gr.Interface(
     inputs=gr.Image(type="filepath"),
     outputs=gr.Textbox(),
     title="Cameroonian Meal Identifier",
-    description="Upload a meal image and get the predicted class."
+    description="Upload a meal image and get the predicted class.\n\n© 2025 [Paulinus Jua](https://www.linkedin.com/in/paulinus-jua-21255116b/). All rights reserved.",
 )
 
 # Launch the app
 if __name__ == "__main__":
-    iface.launch()
+    iface.launch(share=True)
