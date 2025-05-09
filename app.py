@@ -2,6 +2,7 @@ import gradio as gr
 import os
 import io
 import json
+import zipfile
 from google.cloud import storage, vision
 from fastai.vision.all import ImageDataLoaders,load_learner
 from pathlib import Path
