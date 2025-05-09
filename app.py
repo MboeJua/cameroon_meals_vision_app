@@ -4,6 +4,7 @@ import io
 import json
 import torch
 from google.cloud import storage, vision
+from google.cloud.vision import types
 from fastai.vision.all import *
 from fastai.learner import Learner
 from pathlib import Path
@@ -64,18 +65,36 @@ def resize_image(img_path, max_width=640, max_height=480):
 
 
 def call_google_food_api(image_path):
-    client = vision.ImageAnnotatorClient()
-    with open(image_path, 'rb') as img_file:
-        content = img_file.read()
-    image = vision.Image(content=content)
-    response = client.label_detection(image=image)
-    labels = response.label_annotations
-    # Filter for food-related labels
-    food_labels = [label.description for label in labels if 'food' in label.description.lower()]
-    if food_labels:
-        return f"Google detected: {food_labels[0]}"
-    else:
-        return "Unknown"
+    try:
+        # Initialize the Vision API client
+        client = vision.ImageAnnotatorClient()
+        
+        # Read image data
+        with open(image_path, 'rb') as img_file:
+            content = img_file.read()
+        
+        # Prepare the image for Vision API
+        image = vision.Image(content=content)
+        
+        # Call the label detection API
+        response = client.label_detection(image=image)
+        
+        # Check for errors in the API response
+        if response.error.message:
+            return f"Error with Vision API: {response.error.message}"
+        
+        # Get the labels returned by Google Vision
+        labels = response.label_annotations
+        food_labels = [label.description for label in labels if 'food' in label.description.lower()]
+        
+        # Return first valid food label if found, else return Unknown
+        if food_labels:
+            return f"Google detected: {food_labels[0]}"
+        else:
+            return "Google detected: Unknown food"
+
+    except Exception as e:
+        return f"Error calling Google Vision API: {str(e)}"
 
 
 
