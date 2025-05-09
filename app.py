@@ -62,11 +62,14 @@ def resize_image(img_path, max_width=640, max_height=480):
     buf.seek(0)
     return buf
 
-def predict(img):
+
+def predict(img, threshold=0.825):
     resized_img = resize_image(img)
     pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
     prob = outputs[pred_idx].item()
-    return f"Meal: {pred_class}, Probability: {prob:.4f}"
+    if prob < threshold:
+        return f"Meal: Unknown, Confidence: {prob:.4f}"
+    return f"Meal: {pred_class}, Confidence: {prob:.4f}"
 
 #Build Gradio interface
 iface = gr.Interface(
