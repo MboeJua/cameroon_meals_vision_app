@@ -3,6 +3,7 @@ import os
 import json
 from google.cloud import storage
 from fastai.vision.all import load_learner, PILImage
+from pathlib import Path
 
 
 #Setting up GCP client
@@ -13,7 +14,7 @@ with open('gcp_key.json', 'w') as f:
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
 pkl_blob = 'paulinus/cameroon_food.pkl'
-local_pkl = 'cameroon_food.pkl'
+local_pkl = Path('cameroon_food.pkl')
 
 client = storage.Client()
 bucket = client.bucket(bucket_name)
