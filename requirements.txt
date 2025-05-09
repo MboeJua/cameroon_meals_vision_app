@@ -4,4 +4,3 @@ google-cloud-storage
 google-cloud-vision
 pathlib
 torch
-zipfile
