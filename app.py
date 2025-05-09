@@ -1,11 +1,28 @@
 import gradio as gr
 import os
 import json
+from google.cloud import storage
 from fastai.vision.all import load_learner, PILImage
 
-gcp_json = json.loads(os.environ["gcp_cam"])
 
-learn = load_learner("cameroon_food.pkl")
+#Setting up GCP client
+credentials_content = os.environ['gcp_cam']
+with open('gcp_key.json', 'w') as f:
+    f.write(credentials_content)
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
+bucket_name = os.environ['gcp_bucket']
+pkl_blob = 'paulinus/cameroon_food.pkl'
+local_pkl = 'cameroon_food.pkl'
+
+client = storage.Client()
+bucket = client.bucket(bucket_name)
+blob = bucket.blob(pkl_blob)
+blob.download_to_filename(local_pkl)
+
+#Load model
+learn = load_learner(local_pkl)
+
 
 
 def predict(img):
