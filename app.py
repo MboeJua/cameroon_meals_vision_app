@@ -23,7 +23,7 @@ bucket = client.bucket(bucket_name)
 blob = bucket.blob(pkl_blob)
 blob.download_to_filename(str(local_pkl))
 
-learn = Learner.load(local_pkl)
+learn = load_learner(local_pkl)
 
 
 def predict(img):
