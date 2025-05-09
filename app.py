@@ -1,5 +1,6 @@
 import gradio as gr
 import os
+import io
 import json
 import torch
 from google.cloud import storage
@@ -53,8 +54,17 @@ load_model(local_pkl, learn.model, learn.opt)
 
 
 
+def resize_image(img_path, max_width=640, max_height=480):
+    img = Image.open(img_path)
+    img.thumbnail((max_width, max_height))
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=70)
+    buf.seek(0)
+    return buf
+
 def predict(img):
-    pred_class, pred_idx, outputs = learn.predict(PILImage.create(img))
+    resized_img = resize_image(img)
+    pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
     prob = outputs[pred_idx].item()
     return f"Meal: {pred_class}, Probability: {prob:.4f}"
 
@@ -85,4 +95,4 @@ iface = gr.Interface(
 
 # Launch the app
 if __name__ == "__main__":
-    iface.launch(share=True)
+    iface.launch()
