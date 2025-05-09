@@ -2,11 +2,9 @@ import gradio as gr
 import os
 import io
 import json
-import torch
 from google.cloud import storage, vision
-from fastai.vision.all import *
+from fastai.vision.all import ImageDataLoaders,load_learner
 from pathlib import Path
-torch.serialization.add_safe_globals([Learner])
 
 #Setting up GCP client
 credentials_content = os.environ['gcp_cam']
