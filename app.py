@@ -18,7 +18,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
 pkl_blob = os.environ['pretrained_model'] 
 dataset_blob = os.environ['dataset_path'] 
-local_pkl = Path('cameroon_food_weights.pth')
+local_pkl = Path('cameroon_food.pkl')
 local_zip = 'dataset.zip'
 local_dataset_path = Path('dataset')
 bq_client = bigquery.Client()
@@ -54,9 +54,9 @@ dls = ImageDataLoaders.from_folder(
 
 
 
-learn = vision_learner(dls, resnet34, metrics=accuracy)
-load_model(local_pkl, learn.model, learn.opt)
-
+#learn = vision_learner(dls, resnet34, metrics=accuracy)
+#load_model(local_pkl, learn.model, learn.opt)
+learn = load_learner(local_pkl)
 
 
 def upload_image_to_gcs(local_path, dest_folder, dest_filename):
