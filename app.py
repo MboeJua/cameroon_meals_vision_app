@@ -16,8 +16,8 @@ with open('gcp_key.json', 'w') as f:
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 bucket_name = os.environ['gcp_bucket']
-pkl_blob = 'paulinus/cameroon_food_weights.pth'
-dataset_blob = 'paulinus/cameroon_meals/dataset.zip'
+pkl_blob = os.environ['pretrained_model'] 
+dataset_blob = os.environ['dataset_path'] 
 local_pkl = Path('cameroon_food_weights.pth')
 local_zip = 'dataset.zip'
 local_dataset_path = Path('dataset')
