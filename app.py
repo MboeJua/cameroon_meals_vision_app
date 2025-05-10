@@ -56,7 +56,7 @@ dls = ImageDataLoaders.from_folder(
 
 #learn = vision_learner(dls, resnet34, metrics=accuracy)
 #load_model(local_pkl, learn.model, learn.opt)
-learn = Learner.load(local_pkl)
+learn = load_learner(local_pkl)
 
 
 def upload_image_to_gcs(local_path, dest_folder, dest_filename):
