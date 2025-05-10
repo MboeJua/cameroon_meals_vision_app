@@ -4,6 +4,7 @@ import io
 import json
 import zipfile
 import uuid
+from datetime import datetime
 from google.cloud import storage, vision, bigquery
 from fastai.vision.all import ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy, PILImage
 from pathlib import Path
@@ -21,10 +22,10 @@ local_pkl = Path('cameroon_food_weights.pth')
 local_zip = 'dataset.zip'
 local_dataset_path = Path('dataset')
 bq_client = bigquery.Client()
-bq_dataset = 'hugging_face_ai'
-bq_table = 'cameroon_meals_prediction_logs'
+bq_dataset = os.environ['bq_dataset'] 
+bq_table = os.environ['bq_table'] 
 #image_upload_bucket = 'my-app-user-images'
-upload_folder = 'paulinus/cameroon_meals/user_data/'
+upload_folder = os.environ['user_data_gcp'] 
 
 
 client = storage.Client()
