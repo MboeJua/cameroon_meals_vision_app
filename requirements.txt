@@ -7,4 +7,4 @@ pathlib
 torch
 uuid
 datetime
-numpy
+Numpy
