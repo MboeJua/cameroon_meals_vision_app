@@ -3,7 +3,8 @@ import os
 import io
 import json
 import zipfile
-from google.cloud import storage, vision
+import uuid
+from google.cloud import storage, vision, bigquery
 from fastai.vision.all import ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy, PILImage
 from pathlib import Path
 
@@ -19,6 +20,11 @@ dataset_blob = 'paulinus/cameroon_meals/dataset.zip'
 local_pkl = Path('cameroon_food_weights.pth')
 local_zip = 'dataset.zip'
 local_dataset_path = Path('dataset')
+bq_client = bigquery.Client()
+bq_dataset = 'hugging_face_ai'
+bq_table = 'cameroon_meals_prediction_logs'
+#image_upload_bucket = 'my-app-user-images'
+upload_folder = 'paulinus/cameroon_meals/user_data/'
 
 
 client = storage.Client()
@@ -49,6 +55,22 @@ dls = ImageDataLoaders.from_folder(
 
 learn = vision_learner(dls, resnet34, metrics=accuracy)
 load_model(local_pkl, learn.model, learn.opt)
+
+
+
+def upload_image_to_gcs(local_path, dest_folder, dest_filename):
+    blob = bucket.blob(f"{upload_folder}/{dest_folder}{dest_filename}")
+    blob.upload_from_filename(local_path)
+    return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
+
+def log_to_bigquery(record):
+    table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
+    errors = bq_client.insert_rows_json(table_id, [record])
+    if errors:
+        print("BigQuery insert errors:", errors)
+
+
+
 
 
 
@@ -94,16 +116,41 @@ def call_google_food_api(image_path):
 
 
 
+
 def predict(img, threshold=0.825):
+    unique_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat()
     resized_img = resize_image(img)
     pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
     prob = outputs[pred_idx].item()
+
+    # Decide folder
+    if prob >= threshold:
+        dest_folder = f"user_data/{pred_class}/"
+    else:
+        dest_folder = "user_data/unknown/"
+
+    # Upload image
+    uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
+
+    # Log to BigQuery
+    log_to_bigquery({
+        "id": unique_id,
+        "timestamp": timestamp,
+        "image_gcs_path": uploaded_gcs_path,
+        "predicted_class": pred_class,
+        "confidence": prob,
+        "threshold": threshold
+    })
+
     if prob >= threshold:
         return f"Meal: {pred_class}, Confidence: {prob:.4f}"
     else:
         # Low confidence → call Google API
         #google_result = call_google_food_api(img)
         return f"Unknown Meal, Confidence: {prob:.4f}"
+
+
 
 #Build Gradio interface
 iface = gr.Interface(
