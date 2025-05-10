@@ -6,7 +6,7 @@ import zipfile
 import uuid
 from datetime import datetime
 from google.cloud import storage, vision, bigquery
-from fastai.vision.all import ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy, PILImage
+from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy, PILImage
 from pathlib import Path
 
 #Setting up GCP client
@@ -56,7 +56,7 @@ dls = ImageDataLoaders.from_folder(
 
 #learn = vision_learner(dls, resnet34, metrics=accuracy)
 #load_model(local_pkl, learn.model, learn.opt)
-learn = load_learner(local_pkl)
+learn = Learner.load(local_pkl)
 
 
 def upload_image_to_gcs(local_path, dest_folder, dest_filename):
