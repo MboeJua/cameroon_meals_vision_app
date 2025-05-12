@@ -122,23 +122,21 @@ def call_google_food_api(image_path):
 
 
 
-def predict(img, threshold=0.40):
+def predict(image_path, threshold=0.40):
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
+
+    img = PILImage.create(image_path)
     resized_img = resize_image(img)
-    pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
+
+    pred_class, pred_idx, outputs = learn.predict(resized_img)
     prob = outputs[pred_idx].item()
 
     # Decide folder
-    if prob >= threshold:
-        dest_folder = f"user_data/{pred_class}/"
-    else:
-        dest_folder = "user_data/unknown/"
+    dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
 
-    # Upload image
-    uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
+    uploaded_gcs_path = upload_image_to_gcs(image_path, dest_folder, f"{unique_id}.jpg")
 
-    # Log to BigQuery
     log_to_bigquery({
         "id": unique_id,
         "timestamp": timestamp,
@@ -151,9 +149,8 @@ def predict(img, threshold=0.40):
     if prob >= threshold:
         return f"Meal: {pred_class}, Confidence: {prob:.4f}"
     else:
-        # Low confidence → call Google API
-        #google_result = call_google_food_api(img)
         return f"Unknown Meal, Confidence: {prob:.4f}"
+
 
 
 
@@ -179,6 +176,7 @@ def unified_predict(upload_files, webcam_img, clipboard_img):
 with gr.Blocks(theme="peach") as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
+    <p><mark>This tool offers a friendly playground to learn about our diverse dishes. Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</mark></p>
     <p><i>Choose an input source below, and our AI will recognize the meal.</i></p>
     """)
 
