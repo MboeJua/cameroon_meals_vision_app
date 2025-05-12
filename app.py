@@ -5,6 +5,7 @@ import json
 import zipfile
 import uuid
 from datetime import datetime
+#from PIL import Image
 from google.cloud import storage, vision, bigquery
 from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy,PILImage
 from pathlib import Path
@@ -73,13 +74,13 @@ def log_to_bigquery(record):
 
 
 
-def resize_image(img_path, max_width=640, max_height=480):
-    img = Image.open(img_path)
-    img.thumbnail((max_width, max_height))
-    buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=90)
-    buf.seek(0)
-    return buf
+
+def resize_image(img: PILImage, max_width=640, max_height=480):
+    pil_img = img.pil_image if isinstance(img, PILImage) else img
+    pil_img.thumbnail((max_width, max_height))  # Resizes in-place
+    return PILImage.create(pil_img)  # Wrap back for Fastai
+
+
 
 
 
