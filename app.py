@@ -77,7 +77,7 @@ def log_to_bigquery(record):
 
 
 def resize_image(img_path, max_width=640, max_height=480):
-    img = Image.open(img_path)
+    img = img_path
     img.thumbnail((max_width, max_height))
     buf = io.BytesIO()
     img.save(buf, format='JPEG', quality=70)
