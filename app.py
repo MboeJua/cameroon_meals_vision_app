@@ -114,6 +114,10 @@ def call_google_food_api(image_path):
 
 
 
+
+
+
+
 def predict(files, threshold=0.40):
     # If only one file is uploaded, wrap it in a list
     if not isinstance(files, list):
@@ -147,7 +151,7 @@ def predict(files, threshold=0.40):
         })
 
         results.append({
-            "Image": os.path.basename(file.name) if hasattr(file, 'name') else "Captured Image",
+            #"Image": os.path.basename(file.name) if hasattr(file, 'name') else "Captured Image",
             "Prediction": pred_class if prob >= threshold else "Unknown",
             "Confidence": round(prob, 4)
         })
@@ -183,13 +187,15 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
     with gr.Tab("Upload Multiple Images"):
         file_input = gr.File(file_types=["image"], label="Upload images")
         submit_button = gr.Button("Submit")
-        output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
+        output_multi = gr.Dataframe(headers=[#"Image", 
+                                             "Prediction", "Confidence"])
         submit_button.click(fn=predict, inputs=file_input, outputs=output_multi)
 
     with gr.Tab("Webcam or Clipboard (Single Image)"):
         single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
         single_submit = gr.Button("Submit")
-        output_single = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
+        output_single = gr.Dataframe(headers=[#"Image", 
+                                              "Prediction", "Confidence"])
         single_submit.click(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
 
 if __name__ == "__main__":
