@@ -132,7 +132,7 @@ def predict(files, threshold=0.40):
 
         temp_path = f"/tmp/{unique_id}.jpg"
         img.save(temp_path)
-        uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
+        uploaded_gcs_path = upload_image_to_gcs(temp_path, dest_folder, f"{unique_id}.jpg")
         os.remove(temp_path)
 
         log_to_bigquery({
