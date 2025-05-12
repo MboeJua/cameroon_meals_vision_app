@@ -5,9 +5,9 @@ import json
 import zipfile
 import uuid
 from datetime import datetime
-from PIL import Image as PILImage
+#from PIL import Image as PILImages
 from google.cloud import storage, vision, bigquery
-from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy
+from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy,PILImage
 from pathlib import Path
 
 #Setting up GCP client
@@ -77,7 +77,7 @@ def log_to_bigquery(record):
 
 
 def resize_image(img_path, max_width=640, max_height=480):
-    img = img_path
+    img = Image.open(img_path)
     img.thumbnail((max_width, max_height))
     buf = io.BytesIO()
     img.save(buf, format='JPEG', quality=70)
