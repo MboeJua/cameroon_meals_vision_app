@@ -5,7 +5,6 @@ import json
 import zipfile
 import uuid
 from datetime import datetime
-#from PIL import Image as PILImages
 from google.cloud import storage, vision, bigquery
 from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy,PILImage
 from pathlib import Path
@@ -74,8 +73,13 @@ def log_to_bigquery(record):
 
 
 
-def resize_image(img, size=(224, 224)):
-    return img.resize(size)
+def resize_image(img_path, max_width=640, max_height=480):
+    img = Image.open(img_path)
+    img.thumbnail((max_width, max_height))
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=90)
+    buf.seek(0)
+    return buf
 
 
 
@@ -154,37 +158,29 @@ def predict(img, threshold=0.40):
 
 
 #Build Gradio interface
-with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
-    gr.HTML("""
-        <h2>Discover Authentic Cameroonian Meals!</h2>
-        <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
-        <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
-        <p>Future updates will add features like:
-        <ul>
-          <li>Ingredient lists</li>
-          <li>Meal preparation details</li>
-          <li>Origin (locality) information</li>
-          <li>Nearby restaurants</li>
-        </ul>
-        </p>
-        <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
-        <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
-        <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
-        <p><b>You are kindly requested to submit multiple images, as this will help improve the accuracy of future versions through retraining.</b></p>
-        <p>© 2025 Paulinus Jua. All rights reserved.</p>
-    """)
+iface = gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"]),
+    outputs=gr.Textbox(),
+    title="Cameroonian Meal Recognizer",
+    description="""<h2>Discover Authentic Cameroonian Meals!</h2>
+                   <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
+                   <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
+                   <p>Future updates will add features like:
+                   <ul>
+                     <li>Ingredient lists</li>
+                     <li>Meal preparation details</li>
+                     <li>Origin (locality) information</li>
+                     <li>Nearby restaurants</li>
+                   </ul>
+                   </p>
+                   <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
+                   <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
+                   <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
+                   <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
+    theme="peach",  
+)
 
-    with gr.Tab("Upload Multiple Images"):
-        file_input = gr.File(file_types=["image"], label="Upload images")
-        submit_button = gr.Button("Submit")
-        output_multi = gr.Textbox()
-        submit_button.click(fn=predict, inputs=file_input, outputs=output_multi)
-
-    with gr.Tab("Webcam or Clipboard (Single Image)"):
-        single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
-        single_submit = gr.Button("Submit")
-        output_single = gr.Textbox()
-        single_submit.click(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
-
+# Launch the app
 if __name__ == "__main__":
-    demo.launch()
+    iface.launch()
