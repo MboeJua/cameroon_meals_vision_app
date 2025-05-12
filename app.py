@@ -129,7 +129,11 @@ def predict(files, threshold=0.40):
         prob = outputs[pred_idx].item()
 
         dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
+
+        temp_path = f"/tmp/{unique_id}.jpg"
+        img.save(temp_path)
         uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
+        os.remove(temp_path)
 
         log_to_bigquery({
             "id": unique_id,
