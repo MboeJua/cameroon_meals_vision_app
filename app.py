@@ -158,29 +158,39 @@ def predict(img, threshold=0.40):
 
 
 #Build Gradio interface
-iface = gr.Interface(
-    fn=predict,
-    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"]),
-    outputs=gr.Textbox(),
-    title="Cameroonian Meal Recognizer",
-    description="""<h2>Discover Authentic Cameroonian Meals!</h2>
-                   <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
-                   <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
-                   <p>Future updates will add features like:
-                   <ul>
-                     <li>Ingredient lists</li>
-                     <li>Meal preparation details</li>
-                     <li>Origin (locality) information</li>
-                     <li>Nearby restaurants</li>
-                   </ul>
-                   </p>
-                   <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
-                   <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
-                   <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
-                   <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
-    theme="peach",  
+def create_tab(source):
+    return gr.Interface(
+        fn=predict,
+        inputs=gr.Image(type="filepath", sources=[source], label=f"Upload via {source.capitalize()}"),
+        outputs=gr.Textbox(),
+        title="Cameroonian Meal Recognizer",
+        description="""<h2>Discover Authentic Cameroonian Meals!</h2>
+                       <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
+                       <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
+                       <p>Future updates will add features like:
+                       <ul>
+                         <li>Ingredient lists</li>
+                         <li>Meal preparation details</li>
+                         <li>Origin (locality) information</li>
+                         <li>Nearby restaurants</li>
+                       </ul>
+                       </p>
+                       <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
+                       <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
+                       <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
+                       <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
+        theme="peach"
+    )
+
+tabs = gr.TabbedInterface(
+    interface_list=[
+        create_tab("upload"),
+        create_tab("webcam"),
+        create_tab("clipboard")
+    ],
+    tab_names=["Upload", "Webcam", "Clipboard"]
 )
 
-# Launch the app
 if __name__ == "__main__":
-    iface.launch()
+    tabs.launch()
+
