@@ -180,13 +180,13 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
         <p>© 2025 Paulinus Jua. All rights reserved.</p>
     """)
 
-    with gr.Tab("Upload Multiple Images"):
+    gr.Tab("Upload Multiple Images"):
         file_input = gr.File(file_types=["image"], label="Upload images")
         submit_button = gr.Button("Submit")
         output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
         submit_button.click(fn=predict, inputs=file_input, outputs=output_multi)
 
-    with gr.Tab("Webcam or Clipboard (Single Image)"):
+    gr.Tab("Webcam or Clipboard (Single Image)"):
         single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
         single_submit = gr.Button("Submit")
         output_single = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
