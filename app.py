@@ -156,7 +156,7 @@ def predict(img, threshold=0.40):
 #Build Gradio interface
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"]),
+    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"], multiple=True),
     outputs=gr.Textbox(),
     title="Cameroonian Meal Recognizer",
     description="""<h2>Discover Authentic Cameroonian Meals!</h2>
@@ -174,6 +174,7 @@ iface = gr.Interface(
                    <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
                    <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
                    <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
+                   <p><b>You are kindly requested to submit multiple images, as this will help improve the accuracy of future versions through retraining.</b></p>
                    <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
     theme="peach",  
 )
