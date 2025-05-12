@@ -152,12 +152,21 @@ def predict(img, threshold=0.40):
         return f"Unknown Meal, Confidence: {prob:.4f}"
 
 
+def predict_wrapper(input_mode, files=None, image=None):
+    if input_mode == "Multiple Uploads":
+        return predict(files)
+    else:
+        return predict([image])  # wrap single image in list
 
 #Build Gradio interface
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="filepath", sources=["upload", "webcam","clipboard"], multiple=True),
-    outputs=gr.Textbox(),
+    inputs=[
+        gr.Radio(choices=["Multiple Uploads", "Webcam/Clipboard"], label="Choose input mode"),
+        gr.File(file_types=["image"], label="Upload multiple images", visible=True),
+        gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture image", visible=False)
+    ],
+    outputs=gr.Dataframe(headers=["Image", "Prediction", "Confidence"]),
     title="Cameroonian Meal Recognizer",
     description="""<h2>Discover Authentic Cameroonian Meals!</h2>
                    <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
