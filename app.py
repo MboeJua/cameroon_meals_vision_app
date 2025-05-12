@@ -119,6 +119,10 @@ def call_google_food_api(image_path):
 
 
 def predict(files, threshold=0.40):
+    # If only one file is uploaded, wrap it in a list
+    if not isinstance(files, list):
+        files = [files]
+        
     results = []
     for file in files:
         img = PILImage.open(file)
@@ -179,7 +183,7 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
     """)
 
     with gr.Tab("Upload Multiple Images"):
-        file_input = gr.File(file_types=["image"], label="Upload images", multiple=True)
+        file_input = gr.File(file_types=["image"], label="Upload images")
         output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
         file_input.change(fn=predict, inputs=file_input, outputs=output_multi)
 
