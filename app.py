@@ -158,31 +158,43 @@ def predict(img, threshold=0.40):
 
 
 #Build Gradio interface
+import gradio as gr
+
+def predict(image_path):
+    # Replace with your actual prediction logic
+    return f"Prediction result for: {image_path}"
+
+def unified_predict(upload_files, webcam_img, clipboard_img):
+    results = []
+    if upload_files:
+        results = [predict(file.name) for file in upload_files]
+    elif webcam_img:
+        results = [predict(webcam_img)]
+    elif clipboard_img:
+        results = [predict(clipboard_img)]
+    else:
+        return "No image provided."
+    return "\n\n".join(results)
+
 with gr.Blocks(theme="peach") as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
     <p><i>Choose an input source below, and our AI will recognize the meal.</i></p>
     """)
-    
+
     with gr.Tabs():
         with gr.Tab("Upload"):
-            upload_input = gr.Image(type="filepath", sources=["upload"], label="Upload Meal Image")
+            upload_input = gr.File(file_types=["image"], file_count="multiple", label="Upload Meal Images")
         with gr.Tab("Webcam"):
             webcam_input = gr.Image(type="filepath", sources=["webcam"], label="Capture from Webcam")
         with gr.Tab("Clipboard"):
             clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label="Paste from Clipboard")
 
     submit_btn = gr.Button("Identify Meal")
-    output_box = gr.Textbox(label="Prediction Result")
-
-    def unified_predict(upload, webcam, clipboard):
-        selected = upload or webcam or clipboard
-        if not selected:
-            return "No image provided."
-        return predict(selected)
+    output_box = gr.Textbox(label="Prediction Result", lines=10)
 
     submit_btn.click(
-        unified_predict,
+        fn=unified_predict,
         inputs=[upload_input, webcam_input, clipboard_input],
         outputs=output_box
     )
@@ -201,5 +213,6 @@ with gr.Blocks(theme="peach") as demo:
 
 if __name__ == "__main__":
     demo.launch()
+
 
 
