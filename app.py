@@ -121,6 +121,8 @@ def predict(files, threshold=0.40):
         
     results = []
     for file in files:
+        if file is None:
+            continue  # skip if no file
         img = PILImage.create(file)
         unique_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
@@ -180,13 +182,15 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
 
     with gr.Tab("Upload Multiple Images"):
         file_input = gr.File(file_types=["image"], label="Upload images")
+        submit_button = gr.Button("Submit")
         output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
-        file_input.change(fn=predict, inputs=file_input, outputs=output_multi)
+        submit_button.click(fn=predict, inputs=file_input, outputs=output_multi)
 
     with gr.Tab("Webcam or Clipboard (Single Image)"):
         single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
+        single_submit = gr.Button("Submit")
         output_single = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
-        single_input.change(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
+        single_submit.click(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
 
 if __name__ == "__main__":
     demo.launch()
