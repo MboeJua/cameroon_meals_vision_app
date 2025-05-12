@@ -74,15 +74,10 @@ def log_to_bigquery(record):
 
 
 
+def resize_image(img, size=(224, 224)):
+    return img.resize(size)
 
 
-def resize_image(img_path, max_width=640, max_height=480):
-    img = Image.open(img_path)
-    img.thumbnail((max_width, max_height))
-    buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=70)
-    buf.seek(0)
-    return buf
 
 generic_terms_str = os.getenv('generic_terms', '')
 generic_terms = set(generic_terms_str.split(',')) 
