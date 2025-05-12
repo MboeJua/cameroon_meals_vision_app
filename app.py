@@ -155,11 +155,7 @@ def predict(image_path, threshold=0.40):
 
 
 #Build Gradio interface
-import gradio as gr
 
-def predict(image_path):
-    # Replace with your actual prediction logic
-    return f"Prediction result for: {image_path}"
 
 def unified_predict(upload_files, webcam_img, clipboard_img):
     results = []
