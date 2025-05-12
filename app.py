@@ -118,48 +118,38 @@ def call_google_food_api(image_path):
 
 
 
-def predict(files, threshold=0.40):
-    # If only one file is uploaded, wrap it in a list
-    if not isinstance(files, list):
-        files = [files]
-        
-    results = []
-    for file in files:
-        if file is None:
-            continue  # skip if no file
-        img = PILImage.create(file)
-        unique_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
-        resized_img = resize_image(img)
-        pred_class, pred_idx, outputs = learn.predict((resized_img))
-        prob = outputs[pred_idx].item()
+def predict(img, threshold=0.40):
+    unique_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow().isoformat()
+    resized_img = resize_image(img)
+    pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
+    prob = outputs[pred_idx].item()
 
-        dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
+    # Decide folder
+    if prob >= threshold:
+        dest_folder = f"user_data/{pred_class}/"
+    else:
+        dest_folder = "user_data/unknown/"
 
-        temp_path = f"/tmp/{unique_id}.jpg"
-        img.save(temp_path)
-        uploaded_gcs_path = upload_image_to_gcs(temp_path, dest_folder, f"{unique_id}.jpg")
-        os.remove(temp_path)
+    # Upload image
+    uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
 
-        log_to_bigquery({
-            "id": unique_id,
-            "timestamp": timestamp,
-            "image_gcs_path": uploaded_gcs_path,
-            "predicted_class": pred_class,
-            "confidence": prob,
-            "threshold": threshold
-        })
+    # Log to BigQuery
+    log_to_bigquery({
+        "id": unique_id,
+        "timestamp": timestamp,
+        "image_gcs_path": uploaded_gcs_path,
+        "predicted_class": pred_class,
+        "confidence": prob,
+        "threshold": threshold
+    })
 
-        results.append({
-            #"Image": os.path.basename(file.name) if hasattr(file, 'name') else "Captured Image",
-            "Prediction": pred_class if prob >= threshold else "Unknown",
-            "Confidence": round(prob, 4)
-        })
-    return results
-    
+    if prob >= threshold:
+        return f"Meal: {pred_class}, Confidence: {prob:.4f}"
+    else:
         # Low confidence → call Google API
         #google_result = call_google_food_api(img)
-
+        return f"Unknown Meal, Confidence: {prob:.4f}"
 
 
 
@@ -187,15 +177,13 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
     with gr.Tab("Upload Multiple Images"):
         file_input = gr.File(file_types=["image"], label="Upload images")
         submit_button = gr.Button("Submit")
-        output_multi = gr.Dataframe(headers=[#"Image", 
-                                             "Prediction", "Confidence"])
+        output_multi = gr.Textbox()
         submit_button.click(fn=predict, inputs=file_input, outputs=output_multi)
 
     with gr.Tab("Webcam or Clipboard (Single Image)"):
         single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
         single_submit = gr.Button("Submit")
-        output_single = gr.Dataframe(headers=[#"Image", 
-                                              "Prediction", "Confidence"])
+        output_single = gr.Textbox()
         single_submit.click(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
 
 if __name__ == "__main__":
