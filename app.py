@@ -118,38 +118,37 @@ def call_google_food_api(image_path):
 
 
 
-def predict(img, threshold=0.40):
-    unique_id = str(uuid.uuid4())
-    timestamp = datetime.utcnow().isoformat()
-    resized_img = resize_image(img)
-    pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
-    prob = outputs[pred_idx].item()
+def predict(files, threshold=0.40):
+    results = []
+    for file in files:
+        img = PILImage.open(file)
+        unique_id = str(uuid.uuid4())
+        timestamp = datetime.utcnow().isoformat()
+        resized_img = resize_image(img)
+        pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
+        prob = outputs[pred_idx].item()
 
-    # Decide folder
-    if prob >= threshold:
-        dest_folder = f"user_data/{pred_class}/"
-    else:
-        dest_folder = "user_data/unknown/"
+        dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
+        uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
 
-    # Upload image
-    uploaded_gcs_path = upload_image_to_gcs(img, dest_folder, f"{unique_id}.jpg")
+        log_to_bigquery({
+            "id": unique_id,
+            "timestamp": timestamp,
+            "image_gcs_path": uploaded_gcs_path,
+            "predicted_class": pred_class,
+            "confidence": prob,
+            "threshold": threshold
+        })
 
-    # Log to BigQuery
-    log_to_bigquery({
-        "id": unique_id,
-        "timestamp": timestamp,
-        "image_gcs_path": uploaded_gcs_path,
-        "predicted_class": pred_class,
-        "confidence": prob,
-        "threshold": threshold
-    })
-
-    if prob >= threshold:
-        return f"Meal: {pred_class}, Confidence: {prob:.4f}"
-    else:
+        results.append({
+            "Image": os.path.basename(file.name),
+            "Prediction": pred_class if prob >= threshold else "Unknown",
+            "Confidence": round(prob, 4)
+        })
+    return results
+    
         # Low confidence → call Google API
         #google_result = call_google_food_api(img)
-        return f"Unknown Meal, Confidence: {prob:.4f}"
 
 
 def predict_wrapper(input_mode, files=None, image=None):
@@ -159,35 +158,35 @@ def predict_wrapper(input_mode, files=None, image=None):
         return predict([image])  # wrap single image in list
 
 #Build Gradio interface
-iface = gr.Interface(
-    fn=predict,
-    inputs=[
-        gr.Radio(choices=["Multiple Uploads", "Webcam/Clipboard"], label="Choose input mode"),
-        gr.File(file_types=["image"], label="Upload multiple images", visible=True),
-        gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture image", visible=False)
-    ],
-    outputs=gr.Dataframe(headers=["Image", "Prediction", "Confidence"]),
-    title="Cameroonian Meal Recognizer",
-    description="""<h2>Discover Authentic Cameroonian Meals!</h2>
-                   <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
-                   <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
+with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
+    gr.HTML("""
+        <h2>Discover Authentic Cameroonian Meals!</h2>
+        <p><b>Welcome to the Cameroonian Meal Recognizer (Version 1):</b> An AI tool designed to help you identify traditional Cameroonian dishes from a photo.</p>
+        <p><mark>Whether you're a food lover or just exploring Cameroon's rich cuisines, this tool offers a friendly playground to learn about our diverse dishes.</mark></p>
+        <p>Future updates will add features like:
+        <ul>
+          <li>Ingredient lists</li>
+          <li>Meal preparation details</li>
+          <li>Origin (locality) information</li>
+          <li>Nearby restaurants</li>
+        </ul>
+        </p>
+        <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
+        <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
+        <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
+        <p><b>You are kindly requested to submit multiple images, as this will help improve the accuracy of future versions through retraining.</b></p>
+        <p>© 2025 Paulinus Jua. All rights reserved.</p>
+    """)
 
-                   <p>Future updates will add features like:
-                   <ul>
-                     <li>Ingredient lists</li>
-                     <li>Meal preparation details</li>
-                     <li>Origin (locality) information</li>
-                     <li>Nearby restaurants</li>
-                   </ul>
-                   </p>
-                   <p><i>Upload a photo of a meal, and our AI will identify it, providing you with the predicted dish name and probability score.</i></p>
-                   <p><u>Perfect for food lovers, chefs, or anyone looking to explore the unique and diverse flavors of Cameroon.</u></p>
-                   <p>For more information, visit <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua LinkedIn</a>.</p>
-                   <p><b>You are kindly requested to submit multiple images, as this will help improve the accuracy of future versions through retraining.</b></p>
-                   <p>© 2025 Paulinus Jua. All rights reserved.</p>""",
-    theme="peach",  
-)
+    with gr.Tab("Upload Multiple Images"):
+        file_input = gr.File(file_types=["image"], label="Upload images", multiple=True)
+        output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
+        file_input.change(fn=predict, inputs=file_input, outputs=output_multi)
 
-# Launch the app
+    with gr.Tab("Webcam or Clipboard (Single Image)"):
+        single_input = gr.Image(type="pil", sources=["webcam", "clipboard"], label="Capture or paste an image")
+        output_single = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
+        single_input.change(fn=lambda img: predict([img]), inputs=single_input, outputs=output_single)
+
 if __name__ == "__main__":
-    iface.launch()
+    demo.launch()
