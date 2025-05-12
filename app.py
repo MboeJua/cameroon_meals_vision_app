@@ -118,7 +118,7 @@ def call_google_food_api(image_path):
 
 
 
-def predict(img, threshold=0.05):
+def predict(img, threshold=0.40):
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
     resized_img = resize_image(img)
