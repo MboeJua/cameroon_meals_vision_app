@@ -6,5 +6,5 @@ google-cloud-bigquery
 pathlib
 torch
 uuid
-PIL
+Pillow
 datetime
