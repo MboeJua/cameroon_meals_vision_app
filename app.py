@@ -126,11 +126,11 @@ def predict(files, threshold=0.40):
         
     results = []
     for file in files:
-        img = PILImage.open(file)
+        img = PILImage.create(file)
         unique_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
         resized_img = resize_image(img)
-        pred_class, pred_idx, outputs = learn.predict(PILImage.create(resized_img))
+        pred_class, pred_idx, outputs = learn.predict((resized_img))
         prob = outputs[pred_idx].item()
 
         dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
@@ -146,7 +146,7 @@ def predict(files, threshold=0.40):
         })
 
         results.append({
-            "Image": os.path.basename(file.name),
+            "Image": os.path.basename(file.name) if hasattr(file, 'name') else "Captured Image",
             "Prediction": pred_class if prob >= threshold else "Unknown",
             "Confidence": round(prob, 4)
         })
@@ -156,11 +156,7 @@ def predict(files, threshold=0.40):
         #google_result = call_google_food_api(img)
 
 
-def predict_wrapper(input_mode, files=None, image=None):
-    if input_mode == "Multiple Uploads":
-        return predict(files)
-    else:
-        return predict([image])  # wrap single image in list
+
 
 #Build Gradio interface
 with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
@@ -184,7 +180,7 @@ with gr.Blocks(title="Cameroonian Meal Recognizer") as demo:
     """)
 
     with gr.Tab("Upload Multiple Images"):
-        file_input = gr.File(file_types=["image"], label="Upload images")
+        file_input = gr.File(file_types=["image"], label="Upload images", multiple=True)
         output_multi = gr.Dataframe(headers=["Image", "Prediction", "Confidence"])
         file_input.change(fn=predict, inputs=file_input, outputs=output_multi)
 
