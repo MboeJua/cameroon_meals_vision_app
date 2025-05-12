@@ -5,8 +5,9 @@ import json
 import zipfile
 import uuid
 from datetime import datetime
+from PIL import Image as PILImage
 from google.cloud import storage, vision, bigquery
-from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy, PILImage
+from fastai.vision.all import Learner, ImageDataLoaders,load_learner, zipfile, Resize, aug_transforms, vision_learner, load_model, resnet34, Image, accuracy
 from pathlib import Path
 
 #Setting up GCP client
