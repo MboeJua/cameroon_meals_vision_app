@@ -57,9 +57,10 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
 
+    # Load and resize image using fastai's PILImage
     try:
         img = PILImage.create(image_path)
-        img = Resize(224)(img)  # Use fastai's Resize transform (includes center crop)
+        img = img.resize((384, 384))  # Resize directly here (tuple = (width, height))
     except Exception as e:
         print("Image processing error:", e)
         return "Image could not be processed."
@@ -83,6 +84,7 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
+
 
 
 
