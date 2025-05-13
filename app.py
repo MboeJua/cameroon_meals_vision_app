@@ -8,7 +8,7 @@ from google.cloud import storage, bigquery
 from fastai.vision.all import load_learner, PILImage
 from pathlib import Path
 
-# === GCP Setup ===
+# GCP Config
 credentials_content = os.environ['gcp_cam']
 with open('gcp_key.json', 'w') as f:
     f.write(credentials_content)
@@ -20,47 +20,46 @@ upload_folder = os.environ['user_data_gcp']
 bq_dataset = os.environ['bq_dataset']
 bq_table = os.environ['bq_table']
 
-# === Load Model ===
+# Model 
 local_pkl = Path('cam_food_model.pkl')
 if not local_pkl.exists():
     storage.Client().bucket(bucket_name).blob(pkl_blob).download_to_filename(local_pkl)
 learn = load_learner(local_pkl)
 
-# === GCP Clients ===
+
 bq_client = bigquery.Client()
 bucket = storage.Client().bucket(bucket_name)
 
-# === Async Loggers ===
+# Bigquery
 def async_log(record):
     def _log():
-        table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
         try:
+            table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
             bq_client.insert_rows_json(table_id, [record])
         except Exception as e:
-            print("Log error:", e)
+            print("Prediction log error:", e)
     Thread(target=_log, daemon=True).start()
 
 def async_feedback_log(record):
     def _log():
-        table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}_feedback"
         try:
+            table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}_feedback"
             bq_client.insert_rows_json(table_id, [record])
         except Exception as e:
-            print("Feedback error:", e)
+            print("Feedback log error:", e)
     Thread(target=_log, daemon=True).start()
 
-# === Async GCS Upload ===
-def async_upload_image(local_path, dest_folder, dest_filename):
-    def _upload():
-        try:
-            blob = bucket.blob(f"{upload_folder}/{dest_folder}{dest_filename}")
-            blob.upload_from_filename(local_path)
-        except Exception as e:
-            print("GCS upload error:", e)
-    Thread(target=_upload, daemon=True).start()
-    return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
+# === Synchronous GCS Upload ===
+def upload_image_to_gcs(local_path, dest_folder, dest_filename):
+    try:
+        blob = bucket.blob(f"{upload_folder}/{dest_folder}{dest_filename}")
+        blob.upload_from_filename(local_path)
+        return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
+    except Exception as e:
+        print("GCS upload error:", e)
+        return ""
 
-# === Prediction ===
+# Pred
 def predict(image_path, threshold=0.40):
     start = time.time()
     unique_id = str(uuid.uuid4())
@@ -71,7 +70,7 @@ def predict(image_path, threshold=0.40):
     prob = outputs[pred_idx].item()
 
     dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
-    gcs_path = async_upload_image(image_path, dest_folder, f"{unique_id}.jpg")
+    gcs_path = upload_image_to_gcs(image_path, dest_folder, f"{unique_id}.jpg")
 
     async_log({
         "id": unique_id,
@@ -82,11 +81,11 @@ def predict(image_path, threshold=0.40):
         "threshold": threshold
     })
 
-    print(f"Predict + log time: {time.time() - start:.2f}s")
+    print(f"[PROFILE] Total prediction time: {time.time() - start:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
 
-# === Gradio Predict Handler ===
+
 def unified_predict(upload_files, webcam_img, clipboard_img):
     files = []
     if upload_files:
@@ -100,7 +99,7 @@ def unified_predict(upload_files, webcam_img, clipboard_img):
 
     return "\n\n".join([predict(f) for f in files])
 
-# === Feedback Handler ===
+
 def submit_feedback(pred_result, user_input):
     if not user_input.strip():
         return "No feedback entered."
@@ -117,7 +116,7 @@ def submit_feedback(pred_result, user_input):
 
     return "✅ Thank you! Feedback received."
 
-# === Gradio UI ===
+
 with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
