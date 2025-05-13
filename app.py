@@ -171,7 +171,7 @@ def unified_predict(upload_files, webcam_img, clipboard_img):
 with gr.Blocks(theme="peach") as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
-    <p><mark>This tool offers a friendly playground to learn about our diverse dishes. Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</mark></p>
+    <p style='background-color: #b3e5fc; padding: 5px; border-radius: 4px;'>This tool offers a friendly playground to learn about our diverse dishes. Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</p>
     <p><i>Choose an input source below, and our AI will recognize the meal.</i></p>
     """)
 
