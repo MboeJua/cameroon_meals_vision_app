@@ -60,7 +60,7 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     # Load and resize image using fastai's PILImage
     try:
         img = PILImage.create(image_path)
-        img = img.resize((384, 384))  # Resize directly here (tuple = (width, height))
+        img = img.resize((224, 224))  
     except Exception as e:
         print("Image processing error:", e)
         return "Image could not be processed."
