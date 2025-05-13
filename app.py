@@ -6,6 +6,7 @@ from datetime import datetime
 from threading import Thread
 from google.cloud import storage, bigquery
 from fastai.vision.all import load_learner, PILImage
+from fastai.vision.augment import Resize  
 from pathlib import Path
 
 # Setup GCP credentials
@@ -56,10 +57,9 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
 
-    # Load and resize image using fastai's PILImage
     try:
         img = PILImage.create(image_path)
-        img = img.resize((224, 224))  # Resize directly here (tuple = (width, height))
+        img = Resize(224)(img)  # Use fastai's Resize transform (includes center crop)
     except Exception as e:
         print("Image processing error:", e)
         return "Image could not be processed."
@@ -83,6 +83,7 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
+
 
 
 # Handle multiple images + feedback
