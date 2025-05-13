@@ -37,7 +37,7 @@ def upload_image_to_gcs(local_path, dest_folder, dest_filename):
     blob.upload_from_filename(local_path)
     return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
 
-# Async BigQuery logging
+# Background logger
 def log_to_bigquery(record):
     table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
     try:
@@ -50,8 +50,8 @@ def log_to_bigquery(record):
 def async_log(record):
     Thread(target=log_to_bigquery, args=(record,), daemon=True).start()
 
-# Prediction logic with feedback
-def predict(image_path, threshold=0.40, user_feedback=None):
+# Prediction logic
+def predict(image_path, threshold=0.40):
     start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
@@ -69,16 +69,15 @@ def predict(image_path, threshold=0.40, user_feedback=None):
         "image_gcs_path": uploaded_gcs_path,
         "predicted_class": pred_class,
         "confidence": prob,
-        "threshold": threshold,
-        "user_feedback": user_feedback or ""
+        "threshold": threshold
     })
 
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
 
-# Handle multiple images + feedback
-def unified_predict(upload_files, webcam_img, clipboard_img, feedback):
+# Gradio interface
+def unified_predict(upload_files, webcam_img, clipboard_img):
     files = []
     if upload_files:
         files = [file.name for file in upload_files]
@@ -89,9 +88,8 @@ def unified_predict(upload_files, webcam_img, clipboard_img, feedback):
     else:
         return "No image provided."
 
-    return "\n\n".join([predict(f, user_feedback=feedback) for f in files])
+    return "\n\n".join([predict(f) for f in files])
 
-# Gradio UI
 with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
@@ -107,13 +105,12 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         with gr.Tab("Clipboard"):
             clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label="Paste from Clipboard")
 
-    feedback_input = gr.Textbox(label="Feedback: If the prediction is wrong, enter the correct meal name")
     submit_btn = gr.Button("Identify Meal")
     output_box = gr.Textbox(label="Prediction Result", lines=10)
 
     submit_btn.click(
         fn=unified_predict,
-        inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
+        inputs=[upload_input, webcam_input, clipboard_input],
         outputs=output_box
     )
 
