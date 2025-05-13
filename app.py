@@ -1,8 +1,10 @@
 import gradio as gr
 import os
 import uuid
+import time
 from datetime import datetime
-from google.cloud import storage, bigquery, vision
+from threading import Thread
+from google.cloud import storage, bigquery
 from fastai.vision.all import load_learner, PILImage
 from pathlib import Path
 
@@ -35,15 +37,22 @@ def upload_image_to_gcs(local_path, dest_folder, dest_filename):
     blob.upload_from_filename(local_path)
     return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
 
-# Log to BigQuery (async optional)
+# Background logger
 def log_to_bigquery(record):
     table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
-    errors = bq_client.insert_rows_json(table_id, [record])
-    if errors:
-        print("BigQuery insert errors:", errors)
+    try:
+        errors = bq_client.insert_rows_json(table_id, [record])
+        if errors:
+            print("BigQuery insert errors:", errors)
+    except Exception as e:
+        print("Logging error:", e)
+
+def async_log(record):
+    Thread(target=log_to_bigquery, args=(record,), daemon=True).start()
 
 # Prediction logic
 def predict(image_path, threshold=0.40):
+    start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
 
@@ -54,7 +63,7 @@ def predict(image_path, threshold=0.40):
     dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
     uploaded_gcs_path = upload_image_to_gcs(image_path, dest_folder, f"{unique_id}.jpg")
 
-    log_to_bigquery({
+    async_log({
         "id": unique_id,
         "timestamp": timestamp,
         "image_gcs_path": uploaded_gcs_path,
@@ -62,6 +71,8 @@ def predict(image_path, threshold=0.40):
         "confidence": prob,
         "threshold": threshold
     })
+
+    print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
 
@@ -117,6 +128,7 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860, share=True, ssr_mode=False)
+
 
 
 
