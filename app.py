@@ -56,7 +56,14 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
 
-    img = PILImage.create(image_path)
+    # Load and resize image using fastai's PILImage
+    try:
+        img = PILImage.create(image_path)
+        img = img.resize((224, 224))  # Resize directly here (tuple = (width, height))
+    except Exception as e:
+        print("Image processing error:", e)
+        return "Image could not be processed."
+
     pred_class, pred_idx, outputs = learn.predict(img)
     prob = outputs[pred_idx].item()
 
@@ -76,6 +83,7 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
+
 
 # Handle multiple images + feedback
 def unified_predict(upload_files, webcam_img, clipboard_img, feedback):
