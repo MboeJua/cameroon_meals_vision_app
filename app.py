@@ -37,7 +37,7 @@ def upload_image_to_gcs(local_path, dest_folder, dest_filename):
     blob.upload_from_filename(local_path)
     return f"gs://{bucket_name}/{upload_folder}/{dest_folder}{dest_filename}"
 
-# Background logger
+# Async BigQuery logging
 def log_to_bigquery(record):
     table_id = f"{bq_client.project}.{bq_dataset}.{bq_table}"
     try:
@@ -50,8 +50,8 @@ def log_to_bigquery(record):
 def async_log(record):
     Thread(target=log_to_bigquery, args=(record,), daemon=True).start()
 
-# Prediction logic
-def predict(image_path, threshold=0.40):
+# Prediction logic with feedback
+def predict(image_path, threshold=0.40, user_feedback=None):
     start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
@@ -69,15 +69,16 @@ def predict(image_path, threshold=0.40):
         "image_gcs_path": uploaded_gcs_path,
         "predicted_class": pred_class,
         "confidence": prob,
-        "threshold": threshold
+        "threshold": threshold,
+        "user_feedback": user_feedback or ""
     })
 
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
 
-# Gradio interface
-def unified_predict(upload_files, webcam_img, clipboard_img):
+# Handle multiple images + feedback
+def unified_predict(upload_files, webcam_img, clipboard_img, feedback):
     files = []
     if upload_files:
         files = [file.name for file in upload_files]
@@ -88,9 +89,10 @@ def unified_predict(upload_files, webcam_img, clipboard_img):
     else:
         return "No image provided."
 
-    return "\n\n".join([predict(f) for f in files])
+    return "\n\n".join([predict(f, user_feedback=feedback) for f in files])
 
-with gr.Blocks(theme="huggingface", analytics_enabled=False) as demo:
+# Gradio UI
+with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     gr.Markdown("""# Cameroonian Meal Recognizer  
     <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
     <p style='background-color: #b3e5fc; padding: 5px; border-radius: 4px;'>This tool offers a friendly playground to learn about our diverse dishes. Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</p>
@@ -105,12 +107,13 @@ with gr.Blocks(theme="huggingface", analytics_enabled=False) as demo:
         with gr.Tab("Clipboard"):
             clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label="Paste from Clipboard")
 
+    feedback_input = gr.Textbox(label="Feedback: If the prediction is wrong, enter the correct meal name")
     submit_btn = gr.Button("Identify Meal")
     output_box = gr.Textbox(label="Prediction Result", lines=10)
 
     submit_btn.click(
         fn=unified_predict,
-        inputs=[upload_input, webcam_input, clipboard_input],
+        inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
         outputs=output_box
     )
 
@@ -128,7 +131,6 @@ with gr.Blocks(theme="huggingface", analytics_enabled=False) as demo:
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860, share=True, ssr_mode=False)
-
 
 
 
