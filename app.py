@@ -83,7 +83,11 @@ def predict(image_path, threshold=0.40, user_feedback=None):
 
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
-    return f"Meal: {pred_class}, Confidence: {prob:.4f}" if prob >= threshold else f"Unknown Meal, Confidence: {prob:.4f}"
+    return (
+    f"Unknown Meal, Confidence: {prob:.4f}" if prob <= threshold else
+    "Low Confidence" if 0.3 <= prob <= 0.6 else
+    f"Meal: {pred_class}, Confidence: {prob:.4f}"
+)
 
 
 
