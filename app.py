@@ -52,7 +52,7 @@ def async_log(record):
     Thread(target=log_to_bigquery, args=(record,), daemon=True).start()
 
 # Prediction logic with feedback
-def predict(image_path, threshold=0.40, user_feedback=None):
+def predict(image_path, threshold=0.30, user_feedback=None):
     start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
@@ -60,7 +60,7 @@ def predict(image_path, threshold=0.40, user_feedback=None):
     # Load and resize image using fastai's PILImage
     try:
         img = PILImage.create(image_path)
-        img = img.resize((224, 224))  
+        img = img.resize((256, 256))  
     except Exception as e:
         print("Image processing error:", e)
         return "Image could not be processed."
@@ -145,7 +145,7 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     """)
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=True, ssr_mode=False)
+    demo.launch()
 
 
 
