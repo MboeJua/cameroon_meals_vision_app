@@ -85,7 +85,7 @@ def predict(image_path, threshold=0.30, user_feedback=None):
 
     return (
     f"Unknown Meal, Confidence: {prob:.4f}" if prob <= threshold else
-    f"Meal: {pred_class}, Low Confidence" if 0.3 <= prob <= 0.6 else
+    f"Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
     f"Meal: {pred_class}, Confidence: {prob:.4f}"
 )
 
