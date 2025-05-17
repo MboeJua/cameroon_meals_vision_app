@@ -52,7 +52,7 @@ def async_log(record):
     Thread(target=log_to_bigquery, args=(record,), daemon=True).start()
 
 # Prediction logic with feedback
-def predict(image_path, threshold=0.30, user_feedback=None):
+def predict(image_path, threshold=0.275, user_feedback=None):
     start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
@@ -89,7 +89,26 @@ def predict(image_path, threshold=0.30, user_feedback=None):
     f"✅ Meal: {pred_class}"
 )
 
+# Feedback-only logic
+def submit_feedback_only(feedback_text):
+    if not feedback_text.strip():
+        return "⚠️ No feedback provided."
 
+    now = time.time()
+    for ts, uid in reversed(deferred_feedback):
+        if now - ts <= 120:
+            async_log({
+                "id": uid,
+                "timestamp": datetime.utcnow().isoformat(),
+                "image_gcs_path": "feedback_only",
+                "predicted_class": "feedback_update",
+                "confidence": None,
+                "threshold": None,
+                "user_feedback": feedback_text
+            })
+            return "✅ Feedback linked to recent prediction. Thank you!"
+
+    return "⚠️ Feedback not linked: time expired."
 
 
 # Handle multiple images + feedback
@@ -125,11 +144,20 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     feedback_input = gr.Textbox(label="Feedback: If the prediction is wrong, enter the correct meal name")
     submit_btn = gr.Button("Identify Meal")
     output_box = gr.Textbox(label="Prediction Result", lines=10)
+    
+    feedback_btn = gr.Button("Submit Feedback Only")
+    feedback_ack = gr.Textbox(label="Feedback Status", interactive=False)
 
     submit_btn.click(
         fn=unified_predict,
         inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
         outputs=output_box
+    )
+
+    feedback_btn.click(
+        fn=submit_feedback_only,
+        inputs=feedback_input,
+        outputs=feedback_ack
     )
 
     gr.Markdown("""
