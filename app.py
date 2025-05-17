@@ -24,7 +24,7 @@ bq_dataset = os.environ['bq_dataset']
 bq_table = os.environ['bq_table']
 
 # Load model
-local_pkl = Path('cam_meals_f1.pkl')
+local_pkl = Path('cam_meals_f2.pkl')
 if not local_pkl.exists():
     storage.Client().bucket(bucket_name).blob(pkl_blob).download_to_filename(local_pkl)
 
