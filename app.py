@@ -161,7 +161,7 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         )
         feedback_btn = gr.Button("Submit Feedback", scale=1)
 
-    feedback_ack = gr.Textbox(visible=False, interactive=False)
+    feedback_ack = gr.HTML("")
 
     submit_btn.click(
         fn=unified_predict,
@@ -178,7 +178,7 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         return msg
 
     feedback_btn.click(
-        fn=submit_feedback_only,
+        fn=styled_feedback_msg,
         inputs=feedback_input,
         outputs=feedback_ack
     )
