@@ -187,7 +187,9 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
     """)
 
 if __name__ == "__main__":
+    print("App setup complete — launching Gradio...")
     demo.launch()
+    print("Launched.")
 
 
 
