@@ -32,6 +32,9 @@ learn = load_learner(local_pkl)
 bq_client = bigquery.Client()
 bucket = storage.Client().bucket(bucket_name)
 
+# Store recent prediction IDs
+deferred_feedback = deque(maxlen=100)  
+
 # Upload image to GCS
 def upload_image_to_gcs(local_path, dest_folder, dest_filename):
     blob = bucket.blob(f"{upload_folder}/{dest_folder}{dest_filename}")
@@ -80,6 +83,7 @@ def predict(image_path, threshold=0.275, user_feedback=None):
         "threshold": threshold,
         "user_feedback": user_feedback or ""
     })
+    deferred_feedback.append((time.time(), unique_id))
 
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
@@ -141,12 +145,22 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         with gr.Tab("Clipboard"):
             clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label="Paste from Clipboard")
 
-    feedback_input = gr.Textbox(label="Feedback: If the prediction is wrong, enter the correct meal name")
+    
     submit_btn = gr.Button("Identify Meal")
     output_box = gr.Textbox(label="Prediction Result", lines=10)
     
-    feedback_btn = gr.Button("Submit Feedback Only")
-    feedback_ack = gr.Textbox(label="Feedback Status", interactive=False)
+    gr.Markdown("### Feedback")
+
+    with gr.Row():
+        feedback_input = gr.Textbox(
+            label=None,
+            placeholder="If prediction is wrong, enter correct meal name...",
+            lines=1,
+            scale=4
+        )
+        feedback_btn = gr.Button("Submit Feedback", scale=1)
+
+    feedback_ack = gr.Textbox(visible=False, interactive=False)
 
     submit_btn.click(
         fn=unified_predict,
