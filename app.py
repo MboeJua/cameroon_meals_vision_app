@@ -8,6 +8,7 @@ from google.cloud import storage, bigquery
 from fastai.vision.all import load_learner, PILImage
 from fastai.vision.augment import Resize  
 from pathlib import Path
+from transformers import pipeline
 
 # Setup GCP credentials
 credentials_content = os.environ['gcp_cam']
@@ -84,9 +85,9 @@ def predict(image_path, threshold=0.30, user_feedback=None):
     print(f"Prediction time: {time.time() - start_time:.2f}s")
 
     return (
-    f"Unknown Meal, Confidence: {prob:.4f}" if prob <= threshold else
-    f"Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
-    f"Meal: {pred_class}, Confidence: {prob:.4f}"
+    f"❓ Unknown Meal: Provide Name. Thanks" if prob <= threshold else
+    f"⚠️ Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
+    f"✅ Meal: {pred_class}"
 )
 
 
@@ -107,45 +108,92 @@ def unified_predict(upload_files, webcam_img, clipboard_img, feedback):
     return "\n\n".join([predict(f, user_feedback=feedback) for f in files])
 
 # Gradio UI
-with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
-    gr.Markdown("""# Cameroonian Meal Recognizer  
-    <p><b>Welcome to Version 1:</b> Identify traditional Cameroonian dishes from a photo.</p>
-    <p style='background-color: #b3e5fc; padding: 5px; border-radius: 4px;'>This tool offers a friendly playground to learn about our diverse dishes. Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</p>
-    <p><i>Choose an input source below, and our AI will recognize the meal.</i></p>
-    """)
+# Load translator once
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr")
 
-    with gr.Tabs():
-        with gr.Tab("Upload"):
-            upload_input = gr.File(file_types=["image"], file_count="multiple", label="Upload Meal Images")
-        with gr.Tab("Webcam"):
-            webcam_input = gr.Image(type="filepath", sources=["webcam"], label="Capture from Webcam")
-        with gr.Tab("Clipboard"):
-            clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label="Paste from Clipboard")
+# Simple translation function
+def translate(text, lang):
+    if lang == "fr":
+        return translator(text, max_length=512)[0]["translation_text"]
+    return text  # default English
 
-    feedback_input = gr.Textbox(label="Feedback: If the prediction is wrong, enter the correct meal name")
-    submit_btn = gr.Button("Identify Meal")
-    output_box = gr.Textbox(label="Prediction Result", lines=10)
+# UI builder function with dynamic language
+def build_interface(selected_lang):
+    title = translate("Cameroonian Meal Recognizer", selected_lang)
+    welcome = translate("Welcome to Version 1:", selected_lang)
+    instruction = translate("Identify traditional Cameroonian dishes from a photo.", selected_lang)
+    guide = translate("Choose an input source below, and our AI will recognize the meal.", selected_lang)
+    upload_label = translate("Upload Meal Images", selected_lang)
+    webcam_label = translate("Capture from Webcam", selected_lang)
+    clipboard_label = translate("Paste from Clipboard", selected_lang)
+    feedback_label = translate("Feedback: If the prediction is wrong, enter the correct meal name", selected_lang)
+    predict_btn = translate("Identify Meal", selected_lang)
+    output_label = translate("Prediction Result", selected_lang)
 
-    submit_btn.click(
-        fn=unified_predict,
-        inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
-        outputs=output_box
+    with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
+        gr.Markdown(f"""# {title}
+        <p><b>{welcome}</b> {instruction}</p>
+        <p style='background-color: #b3e5fc; padding: 5px; border-radius: 4px;'>
+        This tool offers a friendly playground to learn about our diverse dishes.
+        Therefore multiple image upload is encouraged for improvement in subsequent versions predictions.</p>
+        <p><i>{guide}</i></p>""")
+
+        with gr.Tabs():
+            with gr.Tab(translate("Upload", selected_lang)):
+                upload_input = gr.File(file_types=["image"], file_count="multiple", label=upload_label)
+            with gr.Tab(translate("Webcam", selected_lang)):
+                webcam_input = gr.Image(type="filepath", sources=["webcam"], label=webcam_label)
+            with gr.Tab(translate("Clipboard", selected_lang)):
+                clipboard_input = gr.Image(type="filepath", sources=["clipboard"], label=clipboard_label)
+
+        feedback_input = gr.Textbox(label=feedback_label)
+        submit_btn = gr.Button(predict_btn)
+        output_box = gr.Textbox(label=output_label, lines=10)
+
+        submit_btn.click(
+            fn=unified_predict,
+            inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
+            outputs=output_box
+        )
+
+        gr.Markdown("""
+        <p>Future updates will include:
+        <ul>
+            <li>Ingredient lists</li>
+            <li>Meal preparation details</li>
+            <li>Origin (locality) info</li>
+            <li>Nearby restaurants</li>
+        </ul></p>
+        <p>Learn more on <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua's LinkedIn</a>.</p>
+        <p>© 2025 Paulinus Jua. All rights reserved.</p>
+        """)
+
+    return demo
+
+# Dropdown wrapper
+def launch_app(lang_choice):
+    return build_interface(lang_choice)
+
+# Top-level selector
+with gr.Blocks() as wrapper:
+    lang_dropdown = gr.Dropdown(
+        choices=[("English", "en"), ("Français", "fr")],
+        label="🌐 Select Language",
+        value="en"
     )
+    lang_btn = gr.Button("Load App")
 
-    gr.Markdown("""
-    <p>Future updates will include:
-    <ul>
-        <li>Ingredient lists</li>
-        <li>Meal preparation details</li>
-        <li>Origin (locality) info</li>
-        <li>Nearby restaurants</li>
-    </ul></p>
-    <p>Learn more on <a href="https://www.linkedin.com/in/paulinus-jua-21255116b/" target="_blank">Paulinus Jua's LinkedIn</a>.</p>
-    <p>© 2025 Paulinus Jua. All rights reserved.</p>
-    """)
+    app_output = gr.update(visible=False)
+
+    def launch_selected(lang):
+        demo = build_interface(lang)
+        demo.launch(share=False)  # launch inside callback
+        return gr.update(visible=True)
+
+    lang_btn.click(fn=launch_selected, inputs=lang_dropdown, outputs=app_output)
 
 if __name__ == "__main__":
-    demo.launch()
+    wrapper.launch()
 
 
 
