@@ -8,7 +8,6 @@ from google.cloud import storage, bigquery
 from fastai.vision.all import load_learner, PILImage
 from fastai.vision.augment import Resize  
 from pathlib import Path
-from transformers import pipeline
 
 # Setup GCP credentials
 credentials_content = os.environ['gcp_cam']
