@@ -111,7 +111,7 @@ def submit_feedback_only(feedback_text):
                 "threshold": 0.0,
                 "user_feedback": feedback_text
             })
-            return "✅ Feedback linked to recent prediction. Thank you!"
+            return "✅ Feedback Submitted. Thank you!"
 
     return "⚠️ Feedback not linked: time expired."
 
