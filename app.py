@@ -148,7 +148,7 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
 
     
     submit_btn = gr.Button("Identify Meal")
-    output_box = gr.Textbox(label="Prediction Result", lines=10)
+    output_box = gr.Textbox(label="Prediction Result", lines=6)
     
     gr.Markdown("### Feedback")
 
@@ -168,6 +168,14 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         inputs=[upload_input, webcam_input, clipboard_input, feedback_input],
         outputs=output_box
     )
+
+    def styled_feedback_msg(feedback_text):
+        msg = submit_feedback_only(feedback_text)
+        if msg.startswith("✅"):
+            return f"<span style='color: green; font-weight: bold;'>{msg}</span>"
+        elif msg.startswith("⚠️"):
+            return f"<span style='color: orange; font-weight: bold;'>{msg}</span>"
+        return msg
 
     feedback_btn.click(
         fn=submit_feedback_only,
