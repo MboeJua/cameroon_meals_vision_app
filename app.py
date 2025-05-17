@@ -107,8 +107,8 @@ def submit_feedback_only(feedback_text):
                 "timestamp": datetime.utcnow().isoformat(),
                 "image_gcs_path": "feedback_only",
                 "predicted_class": "feedback_update",
-                "confidence": None,
-                "threshold": None,
+                "confidence": 0.1,
+                "threshold": 0.0,
                 "user_feedback": feedback_text
             })
             return "✅ Feedback linked to recent prediction. Thank you!"
