@@ -42,7 +42,7 @@ def classify_intent(user_input):
     global classifier
     if classifier is None:
         from transformers import pipeline
-        classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        classifier = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-1")
     result = classifier(user_input, labels)
     return result['labels'][0]
 
@@ -52,9 +52,6 @@ labels = ["ingredients", "nutrients", "restaurants"]
 # Store last predicted meal for chat
 chat_state = {"meal": None}
 
-def classify_intent(user_input):
-    result = classifier(user_input, labels)
-    return result['labels'][0]
 
 def handle_chat(user_input, last_pred_meal):
     if not last_pred_meal:
@@ -148,7 +145,7 @@ def predict(image_path, threshold=0.275, user_feedback=None):
     })
     deferred_feedback.append((time.time(), unique_id))
 
-    print(f"Prediction time: {time.time() - start_time:.2f}s")
+    #print(f"Prediction time: {time.time() - start_time:.2f}s")
     chat_state["meal"] = pred_class  # Save meal name for chat
 
 
