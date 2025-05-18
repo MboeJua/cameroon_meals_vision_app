@@ -9,7 +9,7 @@ from fastai.vision.all import load_learner, PILImage
 from fastai.vision.augment import Resize  
 from pathlib import Path
 from collections import deque
-from transformers import pipeline
+#from transformers import pipeline
 
 
 # Setup GCP credentials
@@ -36,7 +36,17 @@ bq_client = bigquery.Client()
 bucket = storage.Client().bucket(bucket_name)
 
 
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+classifier = None  # global placeholder
+
+def classify_intent(user_input):
+    global classifier
+    if classifier is None:
+        from transformers import pipeline
+        classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+    result = classifier(user_input, labels)
+    return result['labels'][0]
+
+
 labels = ["ingredients", "nutrients", "restaurants"]
 
 # Store last predicted meal for chat
