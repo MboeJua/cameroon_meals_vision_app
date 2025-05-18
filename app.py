@@ -9,6 +9,8 @@ from fastai.vision.all import load_learner, PILImage
 from fastai.vision.augment import Resize  
 from pathlib import Path
 from collections import deque
+from transformers import pipeline
+
 
 # Setup GCP credentials
 credentials_content = os.environ['gcp_cam']
@@ -32,6 +34,34 @@ if not local_pkl.exists():
 learn = load_learner(local_pkl)
 bq_client = bigquery.Client()
 bucket = storage.Client().bucket(bucket_name)
+
+
+classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+labels = ["ingredients", "nutrients", "restaurants"]
+
+# Store last predicted meal for chat
+chat_state = {"meal": None}
+
+def classify_intent(user_input):
+    result = classifier(user_input, labels)
+    return result['labels'][0]
+
+def handle_chat(user_input, last_pred_meal):
+    if not last_pred_meal:
+        return "Please upload a meal image first."
+    
+    intent = classify_intent(user_input)
+    info = get_meal_info_from_bq(last_pred_meal).split("\n")
+
+    if intent == "ingredients":
+        return info[0]
+    elif intent == "nutrients":
+        return info[1]
+    elif intent == "restaurants":
+        return f"📍 Restaurants for {last_pred_meal} coming soon."
+    else:
+        return "❓ I didn’t understand. Ask about ingredients, nutrients, or restaurants."
+
 
 def get_meal_info_from_bq(meal_name):
     query = f"""
@@ -109,11 +139,13 @@ def predict(image_path, threshold=0.275, user_feedback=None):
     deferred_feedback.append((time.time(), unique_id))
 
     print(f"Prediction time: {time.time() - start_time:.2f}s")
+    chat_state["meal"] = pred_class  # Save meal name for chat
+
 
     return (
     f"❓ Unknown Meal: Provide Name. Thanks" if prob <= threshold else
     f"⚠️ Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
-    f"✅ Meal: {pred_class}\n\n" + get_meal_info_from_bq(pred_class)
+    f"✅ Meal: {pred_class}"
 )
 
 # Feedback-only logic
@@ -204,6 +236,27 @@ with gr.Blocks(theme="peach", analytics_enabled=False) as demo:
         inputs=feedback_input,
         outputs=feedback_ack
     )
+
+    gr.Markdown("### Ask About the Meal")
+
+    with gr.Row():
+        user_msg = gr.Textbox(
+            label="Ask about ingredients, nutrients or where to find the meal",
+            placeholder="e.g. What are the ingredients?",
+            lines=1,
+            scale=4
+        )
+        chat_btn = gr.Button("Ask", scale=1)
+
+    chat_out = gr.Textbox(label="Bot Reply")
+
+    chat_btn.click(
+        fn=lambda x: handle_chat(x, chat_state["meal"]),
+        inputs=user_msg,
+        outputs=chat_out
+    )
+
+    
 
     gr.Markdown("""
     <p>Future updates will include:
