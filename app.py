@@ -33,6 +33,28 @@ learn = load_learner(local_pkl)
 bq_client = bigquery.Client()
 bucket = storage.Client().bucket(bucket_name)
 
+def get_meal_info_from_bq(meal_name):
+    query = f"""
+    SELECT ingredients, nutrients
+    FROM `{bq_client.project}.{bq_dataset}.cameroon_meals_info`
+    WHERE LOWER(meal) = LOWER(@meal_name)
+    LIMIT 1
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ScalarQueryParameter("meal_name", "STRING", meal_name)]
+    )
+    try:
+        query_job = bq_client.query(query, job_config=job_config)
+        result = list(query_job.result())
+        if not result:
+            return "No extra info found for this meal."
+        row = result[0]
+        return f"🍽️ *Ingredients:* {row.ingredients}\n🥗 *Nutrients:* {row.nutrients}"
+    except Exception as e:
+        print("BQ Fetch Error:", e)
+        return "❌ Could not retrieve meal info."
+
+
 # Store recent prediction IDs
 deferred_feedback = deque(maxlen=100)  
 
@@ -91,7 +113,7 @@ def predict(image_path, threshold=0.275, user_feedback=None):
     return (
     f"❓ Unknown Meal: Provide Name. Thanks" if prob <= threshold else
     f"⚠️ Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
-    f"✅ Meal: {pred_class}"
+    f"✅ Meal: {pred_class}\n\n" + get_meal_info_from_bq(pred_class)
 )
 
 # Feedback-only logic
