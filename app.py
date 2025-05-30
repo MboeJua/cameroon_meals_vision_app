@@ -11,7 +11,7 @@ from torchvision import transforms
 from PIL import Image
 from pathlib import Path
 from collections import deque
-from .modeling import CameroonMealsModel
+from modeling import CameroonMealsModel
 
 # Setup GCP credentials
 credentials_content = os.environ['gcp_cam']
