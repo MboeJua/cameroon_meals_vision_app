@@ -109,20 +109,45 @@ def predict(image_path, threshold=0.275, user_feedback=None):
     start_time = time.time()
     unique_id = str(uuid.uuid4())
     timestamp = datetime.utcnow().isoformat()
+
     try:
         img = Image.open(image_path).convert("RGB")
         img_tensor = transform(img).unsqueeze(0)
     except Exception as e:
         print("Image processing error:", e)
         return "Image could not be processed."
+
     with torch.no_grad():
         logits = model(img_tensor)
+
+        # Handle model output depending on model structure
+        if isinstance(logits, tuple):  # if model returns a tuple
+            logits = logits[0]
+
+        print("Logits shape:", logits.shape)  # Debug
         probs = torch.nn.functional.softmax(logits[0], dim=0)
+        print("Probabilities:", probs.tolist())  # Debug
+
     pred_idx = torch.argmax(probs).item()
-    pred_class = labels[pred_idx]
+    print("Predicted index:", pred_idx)
+
+    # Load labels from config if available
+    try:
+        from transformers import AutoConfig
+        config = AutoConfig.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
+        labels_from_config = config.labels if isinstance(config.labels, list) else list(config.labels)
+        if labels_from_config:
+            pred_class = labels_from_config[pred_idx]
+        else:
+            pred_class = labels[pred_idx]
+    except:
+        pred_class = labels[pred_idx]
+
     prob = probs[pred_idx].item()
+
     dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
     uploaded_gcs_path = upload_image_to_gcs(image_path, dest_folder, f"{unique_id}.jpg")
+
     async_log({
         "id": unique_id,
         "timestamp": timestamp,
@@ -132,13 +157,16 @@ def predict(image_path, threshold=0.275, user_feedback=None):
         "threshold": threshold,
         "user_feedback": user_feedback or ""
     })
+
     deferred_feedback.append((time.time(), unique_id))
     chat_state["meal"] = pred_class
+
     return (
         f"❓ Unknown Meal: Provide Name. Thanks" if prob <= threshold else
         f"⚠️ Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
         f"✅ Meal: {pred_class}"
     )
+
 
 def submit_feedback_only(feedback_text):
     if not feedback_text.strip():
