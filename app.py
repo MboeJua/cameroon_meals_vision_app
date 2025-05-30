@@ -27,7 +27,7 @@ bq_dataset = os.environ['bq_dataset']
 bq_table = os.environ['bq_table']
 
 # Load transformer model
-model = AutoModelForImageClassification.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
+model = AutoModel.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
 model.eval()
 
 labels = [
