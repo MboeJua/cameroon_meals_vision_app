@@ -30,6 +30,11 @@ bq_table = os.environ['bq_table']
 model = AutoModel.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
 model.eval()
 
+test_input = torch.randn(1, 3, 224, 224)  # Assuming standard input
+with torch.no_grad():
+    out = model(test_input)
+    print("Sample output:", out)
+
 config = AutoConfig.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
 labels = config.labels
 
