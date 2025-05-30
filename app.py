@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from threading import Thread
 from google.cloud import storage, bigquery
-from transformers import AutoModel
+from transformers import AutoModel,AutoModelForImageClassification
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -27,7 +27,7 @@ bq_dataset = os.environ['bq_dataset']
 bq_table = os.environ['bq_table']
 
 # Load transformer model
-model = AutoModel.from_pretrained("paulinusjua/cameroon-meals",trust_remote_code=True)
+model = AutoModelForImageClassification.from_pretrained("paulinusjua/cameroon-meals",trust_remote_code=True)
 model.eval()
 
 labels = [
