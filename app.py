@@ -119,30 +119,16 @@ def predict(image_path, threshold=0.275, user_feedback=None):
 
     with torch.no_grad():
         logits = model(img_tensor)
-
-        # Handle model output depending on model structure
-        if isinstance(logits, tuple):  # if model returns a tuple
+        if isinstance(logits, tuple):
             logits = logits[0]
-
-        print("Logits shape:", logits.shape)  # Debug
+        print("Logits shape:", logits.shape)
         probs = torch.nn.functional.softmax(logits[0], dim=0)
-        print("Probabilities:", probs.tolist())  # Debug
+        print("Probabilities:", probs.tolist())
 
     pred_idx = torch.argmax(probs).item()
     print("Predicted index:", pred_idx)
 
-    # Load labels from config if available
-    try:
-        from transformers import AutoConfig
-        config = AutoConfig.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
-        labels_from_config = config.labels if isinstance(config.labels, list) else list(config.labels)
-        if labels_from_config:
-            pred_class = labels_from_config[pred_idx]
-        else:
-            pred_class = labels[pred_idx]
-    except:
-        pred_class = labels[pred_idx]
-
+    pred_class = labels[pred_idx]
     prob = probs[pred_idx].item()
 
     dest_folder = f"user_data/{pred_class}/" if prob >= threshold else "user_data/unknown/"
@@ -166,6 +152,7 @@ def predict(image_path, threshold=0.275, user_feedback=None):
         f"⚠️ Meal: {pred_class}, Low Confidence" if 0.275 <= prob <= 0.5 else
         f"✅ Meal: {pred_class}"
     )
+
 
 
 def submit_feedback_only(feedback_text):
