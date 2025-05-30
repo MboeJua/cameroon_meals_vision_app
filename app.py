@@ -11,6 +11,7 @@ from torchvision import transforms
 from PIL import Image
 from pathlib import Path
 from collections import deque
+from .modeling import CameroonMealsModel
 
 # Setup GCP credentials
 credentials_content = os.environ['gcp_cam']
@@ -27,7 +28,7 @@ bq_dataset = os.environ['bq_dataset']
 bq_table = os.environ['bq_table']
 
 # Load transformer model
-model = AutoModel.from_pretrained("paulinusjua/cameroon-meals")
+model = AutoModel.from_pretrained("paulinusjua/cameroon-meals",trust_remote_code=True)
 model.eval()
 
 labels = [
