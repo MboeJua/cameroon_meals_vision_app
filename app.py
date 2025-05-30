@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from threading import Thread
 from google.cloud import storage, bigquery
-from transformers import AutoModel,AutoModelForImageClassification
+from transformers import AutoModel,AutoModelForImageClassification, AutoConfig
 import torch
 from torchvision import transforms
 from PIL import Image
@@ -30,13 +30,9 @@ bq_table = os.environ['bq_table']
 model = AutoModel.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
 model.eval()
 
-labels = [
-    "Pepper Soup", "kati kati and njama njama", "Koki Beans", "Mbongo Tchobi", "dodo", "soya", "chin-chin",
-    "groundnut soup", "sese plaintains", "Okra Soup", "Puff Puff", "Beignet haricot", "egusi soup", "yassa chicken",
-    "Meat Pie", "kwacoco bible", "Kondre", "Roasted Plantain and Plum", "Banga Soup", "Ekwang", "bobolo", "black soup",
-    "cornchaff", "accra banana", "egusi pudding", "poulet DG", "sangah", "banane malaxée", "hot pot potatoes",
-    "groundnut sweet", "fish roll", "garri with groundnuts", "Eru", "Ndolé", "Achu", "Jollof Rice"
-]
+config = AutoConfig.from_pretrained("paulinusjua/cameroon-meals", trust_remote_code=True)
+labels = config.labels
+
 
 transform = transforms.Compose([
     transforms.Resize((256, 256)),
