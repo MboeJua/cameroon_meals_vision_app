@@ -1,13 +1,26 @@
----
-title: Cameroonian Meals
-emoji: 🏆
-colorFrom: purple
-colorTo: pink
-sdk: gradio
-sdk_version: 5.29.0
-app_file: app.py
-pinned: false
-short_description: Vision Model to Identify Cameroon dishes
+# 🍲 Cameroon Meal Classifier
+
+An AI-powered image classifier for traditional Cameroonian meals, built using FastAI and deployed via Hugging Face Spaces with Gradio.
+
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+## ✅ Features
+
+- 🖼️ Upload or drag & drop food images
+- 🔍 Predicts Cameroonian meal from 36 classes
+- ⚙️ Transformer model ( Based of a Fastai resnet50 model)
+- 🌐 Deployed to Hugging Face or can run locally with Gradio
+- 🔎 Good for cultural food recognition and nutrition
+
+---
+
+## 📁 Project Structure
+├── app.py # Gradio app logic
+├── requirements.txt # Dependencies
+└── README.md 
+
+###Clone the repo 
+```bash
+git clone https://github.com/MboeJua/cameroon_meals_vision_app.git
+cd cameroon_meals_vision_app
+```
